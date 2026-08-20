@@ -30,19 +30,16 @@ enum Estado {
 
 Estado estadoActual = ESPERANDO;
 unsigned long tiempoInicioEspera = 0;
+unsigned long ultimoPasoApagado = 0;
 int ledActual = 0;
-bool LEDsEncendidos[NUM_LEDS];
 
 bool estadoAnteriorInferior = LOW;
 bool estadoAnteriorSuperior = LOW;
 
 void setup() {
-  Serial.begin(9600);
-
   for (int i = 0; i < NUM_LEDS; i++) {
     pinMode(LED_PINS[i], OUTPUT);
     digitalWrite(LED_PINS[i], LOW);
-    LEDsEncendidos[i] = false;
   }
 
   pinMode(SENSOR_INFERIOR, INPUT);
@@ -50,31 +47,22 @@ void setup() {
 
   estadoAnteriorInferior = digitalRead(SENSOR_INFERIOR);
   estadoAnteriorSuperior = digitalRead(SENSOR_SUPERIOR);
-
-  Serial.println("=== Escalera Inteligente ===");
-  Serial.print("Sensor inferior inicial: ");
-  Serial.println(estadoAnteriorInferior);
-  Serial.print("Sensor superior inicial: ");
-  Serial.println(estadoAnteriorSuperior);
 }
 
 bool detectarFlanco(int pin, bool &estadoAnterior) {
-  bool estadoActual = digitalRead(pin);
-  bool flanco = (estadoAnterior == LOW && estadoActual == HIGH);
-  estadoAnterior = estadoActual;
+  bool actual = digitalRead(pin);
+  bool flanco = (estadoAnterior == LOW && actual == HIGH);
+  estadoAnterior = actual;
   return flanco;
+}
+
+bool ledEncendido(int index) {
+  return digitalRead(LED_PINS[index]) == HIGH;
 }
 
 void loop() {
   bool flancoInferior = detectarFlanco(SENSOR_INFERIOR, estadoAnteriorInferior);
   bool flancoSuperior = detectarFlanco(SENSOR_SUPERIOR, estadoAnteriorSuperior);
-
-  Serial.print("Inf: ");
-  Serial.print(digitalRead(SENSOR_INFERIOR));
-  Serial.print(" | Sup: ");
-  Serial.print(digitalRead(SENSOR_SUPERIOR));
-  Serial.print(" | Estado: ");
-  Serial.println(estadoActual);
 
   switch (estadoActual) {
 
@@ -82,99 +70,92 @@ void loop() {
       if (flancoInferior) {
         estadoActual = SUBIENDO;
         ledActual = 0;
-        Serial.println(">>> Deteccion inferior - SUBIENDO");
       } else if (flancoSuperior) {
         estadoActual = BAJANDO;
         ledActual = NUM_LEDS - 1;
-        Serial.println(">>> Deteccion superior - BAJANDO");
       }
       break;
 
     case SUBIENDO:
-      encenderLed(ledActual);
-      Serial.print("Encendiendo LED ");
-      Serial.println(ledActual);
+      digitalWrite(LED_PINS[ledActual], HIGH);
       ledActual++;
       if (ledActual >= NUM_LEDS) {
         estadoActual = ESPERANDO_APAGADO_SUBIR;
         tiempoInicioEspera = millis();
-        Serial.println("Todos encendidos, esperando 5s...");
       }
       delay(VELOCIDAD_TRANSICION);
       break;
 
     case BAJANDO:
-      encenderLed(ledActual);
-      Serial.print("Encendiendo LED ");
-      Serial.println(ledActual);
+      digitalWrite(LED_PINS[ledActual], HIGH);
       ledActual--;
       if (ledActual < 0) {
         estadoActual = ESPERANDO_APAGADO_BAJAR;
         tiempoInicioEspera = millis();
-        Serial.println("Todos encendidos, esperando 5s...");
       }
       delay(VELOCIDAD_TRANSICION);
       break;
 
     case ESPERANDO_APAGADO_SUBIR:
-      if (millis() - tiempoInicioEspera >= TIEMPO_ESPERA) {
+      if (flancoInferior) {
+        estadoActual = SUBIENDO;
+        ledActual = 0;
+      } else if (flancoSuperior) {
+        estadoActual = BAJANDO;
+        ledActual = NUM_LEDS - 1;
+      } else if (millis() - tiempoInicioEspera >= TIEMPO_ESPERA) {
         estadoActual = APAGANDO_SUBIR;
         ledActual = 0;
-        Serial.println("Iniciando apagado...");
+        ultimoPasoApagado = millis();
       }
       break;
 
     case ESPERANDO_APAGADO_BAJAR:
-      if (millis() - tiempoInicioEspera >= TIEMPO_ESPERA) {
+      if (flancoInferior) {
+        estadoActual = SUBIENDO;
+        ledActual = 0;
+      } else if (flancoSuperior) {
+        estadoActual = BAJANDO;
+        ledActual = NUM_LEDS - 1;
+      } else if (millis() - tiempoInicioEspera >= TIEMPO_ESPERA) {
         estadoActual = APAGANDO_BAJAR;
         ledActual = NUM_LEDS - 1;
-        Serial.println("Iniciando apagado...");
+        ultimoPasoApagado = millis();
       }
       break;
 
     case APAGANDO_SUBIR:
-      apagarLed(ledActual);
-      Serial.print("Apagando LED ");
-      Serial.println(ledActual);
-      ledActual++;
-      if (ledActual >= NUM_LEDS) {
-        estadoActual = ESPERANDO;
-        Serial.println("=== Ciclo completo ===");
+      if (flancoInferior) {
+        estadoActual = SUBIENDO;
+        ledActual = 0;
+      } else if (flancoSuperior) {
+        estadoActual = BAJANDO;
+        ledActual = NUM_LEDS - 1;
+      } else if (millis() - ultimoPasoApagado >= VELOCIDAD_TRANSICION) {
+        digitalWrite(LED_PINS[ledActual], LOW);
+        ledActual++;
+        ultimoPasoApagado = millis();
+        if (ledActual >= NUM_LEDS) {
+          estadoActual = ESPERANDO;
+        }
       }
-      delay(VELOCIDAD_TRANSICION);
       break;
 
     case APAGANDO_BAJAR:
-      apagarLed(ledActual);
-      Serial.print("Apagando LED ");
-      Serial.println(ledActual);
-      ledActual--;
-      if (ledActual < 0) {
-        estadoActual = ESPERANDO;
-        Serial.println("=== Ciclo completo ===");
+      if (flancoInferior) {
+        estadoActual = SUBIENDO;
+        ledActual = 0;
+      } else if (flancoSuperior) {
+        estadoActual = BAJANDO;
+        ledActual = NUM_LEDS - 1;
+      } else if (millis() - ultimoPasoApagado >= VELOCIDAD_TRANSICION) {
+        digitalWrite(LED_PINS[ledActual], LOW);
+        ledActual--;
+        ultimoPasoApagado = millis();
+        if (ledActual < 0) {
+          estadoActual = ESPERANDO;
+        }
       }
-      delay(VELOCIDAD_TRANSICION);
       break;
-  }
-}
-
-void encenderLed(int index) {
-  if (index >= 0 && index < NUM_LEDS) {
-    digitalWrite(LED_PINS[index], HIGH);
-    LEDsEncendidos[index] = true;
-  }
-}
-
-void apagarLed(int index) {
-  if (index >= 0 && index < NUM_LEDS) {
-    digitalWrite(LED_PINS[index], LOW);
-    LEDsEncendidos[index] = false;
-  }
-}
-
-void apagarTodos() {
-  for (int i = 0; i < NUM_LEDS; i++) {
-    digitalWrite(LED_PINS[i], LOW);
-    LEDsEncendidos[i] = false;
   }
 }

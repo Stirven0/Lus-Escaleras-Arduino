@@ -35,6 +35,10 @@ java -jar /home/stirven/Compyler/doc/plantuml-mit-1.2026.6.jar -tpng diagramas/*
 
 - Código en español (nombres de variables, funciones, comentarios)
 - Sin librerías externas, solo Arduino core
+- Sin debug Serial en producción
 - Resistencias: 220 ohm para LEDs blancos, 100 ohm para IR emisor, 10k ohm pull-up para IR receptor
 - Pinout fijo: LEDs en D2-D9, sensores en D10 (inferior) y D11 (superior)
 - Transición: 300ms por escalón, 5 segundos de pausa
+- Detección por flanco ascendente (cambio LOW→HIGH)
+- Apagado no bloqueante: usa millis() en vez de delay()
+- Interrupción de apagado: si detecta nuevo sensor durante apagado, revierte a encendido
