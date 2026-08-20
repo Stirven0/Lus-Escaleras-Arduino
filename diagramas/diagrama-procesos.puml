@@ -1,0 +1,40 @@
+@startuml diagrama-procesos
+title Diagrama de Procesos - Escalera Inteligente
+
+|Hardware|
+|:Sensores IR:|
+|:Emisor inferior (5V + 100 ohm)|
+|:Receptor inferior (D10 + pull-up 10k)|
+|:Emisor superior (5V + 100 ohm)|
+|:Receptor superior (D11 + pull-up 10k)|
+
+|Arduino Uno|
+|:Leer estado de sensores;|
+|:Evaluar direccion de movimiento;|
+
+if (Movimiento detectado?) then (si)
+  |Arduino Uno|
+  if (Direccion = subir?) then (subir)
+    |Salida LED|
+    |:Encender LEDs 1-8\nsecuencialmente (300ms);|
+    |Arduino Uno|
+    |:Esperar 5 segundos;|
+    |Salida LED|
+    |:Apagar LEDs 1-8\nsecuencialmente (300ms);|
+  else (bajar)
+    |Salida LED|
+    |:Encender LEDs 8-1\nsecuencialmente (300ms);|
+    |Arduino Uno|
+    |:Esperar 5 segundos;|
+    |Salida LED|
+    |:Apagar LEDs 8-1\nsecuencialmente (300ms);|
+  endif
+else (no)
+  |Arduino Uno|
+  |:Mantener estado de espera;|
+endif
+
+|Arduino Uno|
+|:Reiniciar ciclo de deteccion;|
+
+@enduml

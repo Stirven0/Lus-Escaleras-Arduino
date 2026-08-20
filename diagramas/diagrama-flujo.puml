@@ -1,0 +1,56 @@
+@startuml diagrama-flujo
+title Diagrama de Flujo - Escalera Inteligente
+
+start
+
+:Inicio del programa;
+
+:Inicializar pines\n LEDs: D2-D9 (salida)\n Sensores: D10, D11 (entrada);
+
+:Apagar todos los LEDs;
+
+repeat
+
+  :Leer sensores IR;
+
+  if (Sensor inferior detecta?) then (si)
+    :Estado = SUBIENDO;
+    :Indice LED = 0;
+  elseif (Sensor superior detecta?) then (si)
+    :Estado = BAJANDO;
+    :Indice LED = 7;
+  endif
+
+  if (Estado == SUBIENDO?) then (si)
+    repeat
+      :Encender LED[indice];
+      :Indice++;
+      :Delay 300ms;
+    repeat while (indice < 8) is (no)
+    :Esperar 5 segundos;
+    repeat
+      :Apagar LED[indice];
+      :Indice++;
+      :Delay 300ms;
+    repeat while (indice < 8) is (no)
+
+  elseif (Estado == BAJANDO?) then (si)
+    repeat
+      :Encender LED[indice];
+      :Indice--;
+      :Delay 300ms;
+    repeat while (indice >= 0) is (no)
+    :Esperar 5 segundos;
+    repeat
+      :Apagar LED[indice];
+      :Indice--;
+      :Delay 300ms;
+    repeat while (indice >= 0) is (no)
+  endif
+
+  :Apagar todos los LEDs;
+  :Estado = ESPERANDO;
+
+repeat
+
+@enduml

@@ -1,0 +1,47 @@
+@startuml diagrama-eps
+title Diagrama EPS - Escalera Inteligente
+
+rectangle "ENTRADA" as entrada #LightBlue {
+  rectangle "Sensor IR Inferior\n(Deteccion abajo)" as s1
+  rectangle "Sensor IR Superior\n(Deteccion arriba)" as s2
+  rectangle "Alimentacion 5V\n(puerto USB)" as s3
+}
+
+rectangle "PROCESO" as proceso #LightGreen {
+  rectangle "Arduino Uno\n(ATmega328P)" as a1
+  rectangle "Lectura de\nsensores" as a2
+  rectangle "Logica de\ndireccion" as a3
+  rectangle "Control temporal\n(300ms/5s)" as a4
+  rectangle "Secuencia de\nencendido/apagado" as a5
+}
+
+rectangle "SALIDA" as salida #LightCoral {
+  rectangle "LED Escalon 1\n(D2 + 220 ohm)" as o1
+  rectangle "LED Escalon 2\n(D3 + 220 ohm)" as o2
+  rectangle "LED Escalon 3\n(D4 + 220 ohm)" as o3
+  rectangle "LED Escalon 4\n(D5 + 220 ohm)" as o4
+  rectangle "LED Escalon 5\n(D6 + 220 ohm)" as o5
+  rectangle "LED Escalon 6\n(D7 + 220 ohm)" as o6
+  rectangle "LED Escalon 7\n(D8 + 220 ohm)" as o7
+  rectangle "LED Escalon 8\n(D9 + 220 ohm)" as o8
+}
+
+s1 --> a1 : Pin D10
+s2 --> a1 : Pin D11
+s3 --> a1 : 5V
+
+a1 --> a2
+a2 --> a3
+a3 --> a4
+a4 --> a5
+
+a5 --> o1 : D2
+a5 --> o2 : D3
+a5 --> o3 : D4
+a5 --> o4 : D5
+a5 --> o5 : D6
+a5 --> o6 : D7
+a5 --> o7 : D8
+a5 --> o8 : D9
+
+@enduml
