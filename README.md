@@ -50,7 +50,7 @@ arduino-cli upload --fqbn arduino:avr:uno --port /dev/ttyACM0 Lus-Escaleras-Ardu
 
 ## Documentacion
 
-Visita la [pagina del proyecto](https://tu-usuario.github.io/Lus-Escaleras-Arduino/)
+Visita la [pagina del proyecto](https://Stirven0.github.io/Lus-Escaleras-Arduino/)
 para ver diagramas de flujo, procesos y EPS.
 
 ## Licencia
