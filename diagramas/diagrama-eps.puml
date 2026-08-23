@@ -1,47 +1,54 @@
 @startuml diagrama-eps
-title Diagrama EPS - Escalera Inteligente
+title Diagrama EPS (Entrada - Proceso - Salida) - Escalera Inteligente
 
-rectangle "ENTRADA" as entrada #LightBlue {
-  rectangle "Sensor IR Inferior\n(Deteccion abajo)" as s1
-  rectangle "Sensor IR Superior\n(Deteccion arriba)" as s2
-  rectangle "Alimentacion 5V\n(puerto USB)" as s3
+skinparam shadowing true
+skinparam rectangle {
+  RoundCorner 10
+  FontName Arial
+  FontSize 12
 }
 
-rectangle "PROCESO" as proceso #LightGreen {
-  rectangle "Arduino Uno\n(ATmega328P)" as a1
-  rectangle "Lectura de\nsensores" as a2
-  rectangle "Logica de\ndireccion" as a3
-  rectangle "Control temporal\n(300ms/5s)" as a4
-  rectangle "Secuencia de\nencendido/apagado" as a5
+rectangle "ENTRADA" as entrada #E0F2FE {
+  rectangle "Sensor IR Inferior\n(Receptor en Pin D10)" as s1 #BAE6FD
+  rectangle "Sensor IR Superior\n(Receptor en Pin D11)" as s2 #BAE6FD
+  rectangle "Alimentación 5V\n(Puerto USB Arduino)" as s3 #BAE6FD
 }
 
-rectangle "SALIDA" as salida #LightCoral {
-  rectangle "LED Escalon 1\n(D2 + 220 ohm)" as o1
-  rectangle "LED Escalon 2\n(D3 + 220 ohm)" as o2
-  rectangle "LED Escalon 3\n(D4 + 220 ohm)" as o3
-  rectangle "LED Escalon 4\n(D5 + 220 ohm)" as o4
-  rectangle "LED Escalon 5\n(D6 + 220 ohm)" as o5
-  rectangle "LED Escalon 6\n(D7 + 220 ohm)" as o6
-  rectangle "LED Escalon 7\n(D8 + 220 ohm)" as o7
-  rectangle "LED Escalon 8\n(D9 + 220 ohm)" as o8
+rectangle "PROCESO" as proceso #DCFCE7 {
+  rectangle "Arduino Uno\n(ATmega328P)" as a1 #86EFAC
+  rectangle "Lectura de Flancos\n(Detección LOW -> HIGH)" as a2 #86EFAC
+  rectangle "Evaluación de Dirección\n(Subir / Bajar)" as a3 #86EFAC
+  rectangle "Máquina de Estados\n(7 Estados de Control)" as a4 #86EFAC
+  rectangle "Temporización no Bloqueante\n(300ms paso / 5s espera)" as a5 #86EFAC
 }
 
-s1 --> a1 : Pin D10
-s2 --> a1 : Pin D11
-s3 --> a1 : 5V
+rectangle "SALIDA" as salida #FEE2E2 {
+  rectangle "LED Escalón 1 (Pin D2 + 220 Ω)" as o1 #FCA5A5
+  rectangle "LED Escalón 2 (Pin D3 + 220 Ω)" as o2 #FCA5A5
+  rectangle "LED Escalón 3 (Pin D4 + 220 Ω)" as o3 #FCA5A5
+  rectangle "LED Escalón 4 (Pin D5 + 220 Ω)" as o4 #FCA5A5
+  rectangle "LED Escalón 5 (Pin D6 + 220 Ω)" as o5 #FCA5A5
+  rectangle "LED Escalón 6 (Pin D7 + 220 Ω)" as o6 #FCA5A5
+  rectangle "LED Escalón 7 (Pin D8 + 220 Ω)" as o7 #FCA5A5
+  rectangle "LED Escalón 8 (Pin D9 + 220 Ω)" as o8 #FCA5A5
+}
+
+s1 --> a1 : Señal D10
+s2 --> a1 : Señal D11
+s3 --> a1 : Voltaje 5V
 
 a1 --> a2
 a2 --> a3
 a3 --> a4
 a4 --> a5
 
-a5 --> o1 : D2
-a5 --> o2 : D3
-a5 --> o3 : D4
-a5 --> o4 : D5
-a5 --> o5 : D6
-a5 --> o6 : D7
-a5 --> o7 : D8
-a5 --> o8 : D9
+a5 --> o1 : Control D2
+a5 --> o2 : Control D3
+a5 --> o3 : Control D4
+a5 --> o4 : Control D5
+a5 --> o5 : Control D6
+a5 --> o6 : Control D7
+a5 --> o7 : Control D8
+a5 --> o8 : Control D9
 
 @enduml

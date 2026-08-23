@@ -1,40 +1,42 @@
 @startuml diagrama-procesos
 title Diagrama de Procesos - Escalera Inteligente
 
-|Hardware|
-|:Sensores IR:|
-|:Emisor inferior (5V + 100 ohm)|
-|:Receptor inferior (D10 + pull-up 10k)|
-|:Emisor superior (5V + 100 ohm)|
-|:Receptor superior (D11 + pull-up 10k)|
+skinparam shadowing true
+skinparam swimlane {
+  BorderColor #0284C7
+  BackgroundColor #F0F9FF
+  FontName Arial
+  FontSize 12
+}
+
+|Sensores IR|
+start
+:Detección de presencia física\n(Corte de haz infrarrojo);
+:Generación de pulso eléctrico\n(Cambio de nivel digital);
 
 |Arduino Uno|
-|:Leer estado de sensores;|
-|:Evaluar direccion de movimiento;|
+:Lectura continua de pines D10 y D11;
+:Filtrado de flanco ascendente (LOW -> HIGH);
+:Evaluación del estado actual del sistema;
 
-if (Movimiento detectado?) then (si)
-  |Arduino Uno|
-  if (Direccion = subir?) then (subir)
-    |Salida LED|
-    |:Encender LEDs 1-8\nsecuencialmente (300ms);|
-    |Arduino Uno|
-    |:Esperar 5 segundos;|
-    |Salida LED|
-    |:Apagar LEDs 1-8\nsecuencialmente (300ms);|
-  else (bajar)
-    |Salida LED|
-    |:Encender LEDs 8-1\nsecuencialmente (300ms);|
-    |Arduino Uno|
-    |:Esperar 5 segundos;|
-    |Salida LED|
-    |:Apagar LEDs 8-1\nsecuencialmente (300ms);|
+if (¿Hay evento de sensor o tiempo cumplido?) then (sí)
+  :Selección del estado destino en la máquina de estados;
+  :Cálculo de secuencia y tiempos (300ms / 5000ms);
+
+  |Salida LEDs|
+  if (¿Acción requerida?) then (Encendido)
+    :Envío de señal HIGH a pines D2-D9\n(Secuencial de 1 a 8 o 8 a 1);
+  else (Apagado)
+    :Envío de señal LOW a pines D2-D9\n(Secuencial no bloqueante);
   endif
+
 else (no)
   |Arduino Uno|
-  |:Mantener estado de espera;|
+  :Mantener lectura continua de sensores;
 endif
 
 |Arduino Uno|
-|:Reiniciar ciclo de deteccion;|
+:Finalizar iteración y mantener ciclo continuo;
 
+stop
 @enduml

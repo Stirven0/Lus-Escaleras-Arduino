@@ -1,0 +1,54 @@
+@startuml diagrama-estados
+title Máquina de Estados Finitos - Escalera Inteligente
+
+skinparam monochrome false
+skinparam shadowing true
+skinparam state {
+  BackgroundColor<<Reposo>> #E0F2FE
+  BorderColor<<Reposo>> #0284C7
+  BackgroundColor<<Encendido>> #FEF08A
+  BorderColor<<Encendido>> #CA8A04
+  BackgroundColor<<Espera>> #FED7AA
+  BorderColor<<Espera>> #EA580C
+  BackgroundColor<<Apagado>> #FCA5A5
+  BorderColor<<Apagado>> #DC2626
+  FontName Arial
+  FontSize 12
+}
+
+[*] --> ESPERANDO_PERSONA
+
+state "ESPERANDO_PERSONA" as ESPERANDO_PERSONA <<Reposo>> : Luces apagadas\nSensores activos
+
+state "SUBIENDO_ENCENDIENDO" as SUBIENDO_ENCENDIENDO <<Encendido>> : Encendiendo LEDs 1 -> 8\n(300ms por escalón)
+state "BAJANDO_ENCENDIENDO" as BAJANDO_ENCENDIENDO <<Encendido>> : Encendiendo LEDs 8 -> 1\n(300ms por escalón)
+
+state "ESPERANDO_APAGADO_SUBIR" as ESPERANDO_APAGADO_SUBIR <<Espera>> : Escalones encendidos\nPausa de 5 segundos
+state "ESPERANDO_APAGADO_BAJAR" as ESPERANDO_APAGADO_BAJAR <<Espera>> : Escalones encendidos\nPausa de 5 segundos
+
+state "APAGANDO_SUBIR" as APAGANDO_SUBIR <<Apagado>> : Apagando LEDs 1 -> 8\n(300ms por escalón, millis)
+state "APAGANDO_BAJAR" as APAGANDO_BAJAR <<Apagado>> : Apagando LEDs 8 -> 1\n(300ms por escalón, millis)
+
+ESPERANDO_PERSONA --> SUBIENDO_ENCENDIENDO : Sensor Inferior (D10)
+ESPERANDO_PERSONA --> BAJANDO_ENCENDIENDO : Sensor Superior (D11)
+
+SUBIENDO_ENCENDIENDO --> ESPERANDO_APAGADO_SUBIR : Todos los LEDs encendidos
+BAJANDO_ENCENDIENDO --> ESPERANDO_APAGADO_BAJAR : Todos los LEDs encendidos
+
+ESPERANDO_APAGADO_SUBIR --> SUBIENDO_ENCENDIENDO : Sensor Inferior (Reinicio)
+ESPERANDO_APAGADO_SUBIR --> BAJANDO_ENCENDIENDO : Sensor Superior (Cambio dir.)
+ESPERANDO_APAGADO_SUBIR --> APAGANDO_SUBIR : Pasan 5 segundos
+
+ESPERANDO_APAGADO_BAJAR --> SUBIENDO_ENCENDIENDO : Sensor Inferior (Cambio dir.)
+ESPERANDO_APAGADO_BAJAR --> BAJANDO_ENCENDIENDO : Sensor Superior (Reinicio)
+ESPERANDO_APAGADO_BAJAR --> APAGANDO_BAJAR : Pasan 5 segundos
+
+APAGANDO_SUBIR --> SUBIENDO_ENCENDIENDO : Sensor Inferior (Interrupción)
+APAGANDO_SUBIR --> BAJANDO_ENCENDIENDO : Sensor Superior (Interrupción)
+APAGANDO_SUBIR --> ESPERANDO_PERSONA : Todos los LEDs apagados
+
+APAGANDO_BAJAR --> SUBIENDO_ENCENDIENDO : Sensor Inferior (Interrupción)
+APAGANDO_BAJAR --> BAJANDO_ENCENDIENDO : Sensor Superior (Interrupción)
+APAGANDO_BAJAR --> ESPERANDO_PERSONA : Todos los LEDs apagados
+
+@enduml

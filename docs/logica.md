@@ -1,57 +1,63 @@
-# Logica del Programa
+# Lógica del Programa
 
-## Diagrama de Flujo
+El sistema de control de la escalera inteligente está diseñado mediante una **máquina de estados finitos** implementada en C++ para Arduino. Garantiza un encendido/apagado progresivo, temporización no bloqueante e interrupción inmediata si ingresa un nuevo usuario.
+
+---
+
+## 1. Máquina de Estados Finitos
+
+El programa consta de **7 estados principales** que controlan el flujo de operación de la escalera:
+
+![Diagrama de Estados](imagenes/diagrama-estados.png)
+
+### Resumen de Estados del Sistema (`EstadoSistema`)
+
+| Nombre del Estado | Descripción del Comportamiento |
+|-------------------|--------------------------------|
+| `ESPERANDO_PERSONA` | **Reposo:** Luces apagadas, monitoreo constante de sensores IR. |
+| `SUBIENDO_ENCENDIENDO` | Encendido secuencial de LEDs del escalón 1 al 8 (300 ms/escalón). |
+| `BAJANDO_ENCENDIENDO` | Encendido secuencial de LEDs del escalón 8 al 1 (300 ms/escalón). |
+| `ESPERANDO_APAGADO_SUBIR` | Todos los LEDs encendidos; temporizador no bloqueante de 5 segundos. |
+| `ESPERANDO_APAGADO_BAJAR` | Todos los LEDs encendidos; temporizador no bloqueante de 5 segundos. |
+| `APAGANDO_SUBIR` | Apagado secuencial del escalón 1 al 8 mediante `millis()` (300 ms/escalón). |
+| `APAGANDO_BAJAR` | Apagado secuencial del escalón 8 al 1 mediante `millis()` (300 ms/escalón). |
+
+---
+
+## 2. Diagrama de Flujo del Programa
+
+Muestra la lógica de decisiones que toma el programa en cada iteración del bucle `loop()`:
 
 ![Diagrama de Flujo](imagenes/diagrama-flujo.png)
 
-## Diagrama de Procesos
+---
+
+## 3. Diagrama de Procesos
+
+Describe la interacción entre el hardware físico (sensores), el microcontrolador Arduino y las salidas digitales (LEDs):
 
 ![Diagrama de Procesos](imagenes/diagrama-procesos.png)
 
-## Estados del Sistema
+---
 
-El programa utiliza una maquina de estados con 7 estados:
+## 4. Conceptos Clave de Implementación
 
-| Estado | Descripcion |
-|--------|-------------|
-| ESPERANDO | Sin deteccion, esperando señal de sensor |
-| SUBIENDO | Encendiendo LEDs de abajo hacia arriba (1→8) |
-| BAJANDO | Encendiendo LEDs de arriba hacia abajo (8→1) |
-| ESPERANDO_APAGADO_SUBIR | Todos encendidos, esperando 5s antes de apagar |
-| ESPERANDO_APAGADO_BAJAR | Todos encendidos, esperando 5s antes de apagar |
-| APAGANDO_SUBIR | Apagando LEDs de abajo hacia arriba (1→8) |
-| APAGANDO_BAJAR | Apagando LEDs de arriba hacia abajo (8→1) |
+### Detección por Flanco Ascendente (`detectarPasoPersona`)
+Para evitar lecturas falsas o múltiples disparos cuando una persona se queda parada frente al sensor, la función evalúa la transición digital de **LOW $\rightarrow$ HIGH**:
+```cpp
+bool personaDetectada = (estadoAnterior == LOW && lecturaActual == HIGH);
+```
 
-## Tiempos
+### Temporización No Bloqueante con `millis()`
+Durante las etapas de apagado y pausa de 5 segundos, se utiliza la función nativa `millis()` en lugar de `delay()`. Esto permite al Arduino continuar leyendo los sensores digitales en tiempo real.
 
-- **Transicion**: 300 milisegundos por escalon
-- **Espera**: 5 segundos con todos los LEDs encendidos
-- **Ciclo completo**: ~10 segundos (encendido + espera + apagado)
+### Interrupción durante el Apagado
+Si durante el estado `APAGANDO_SUBIR` o `APAGANDO_BAJAR` una persona activa cualquiera de los dos sensores IR, el sistema interrumpe inmediatamente el apagado y revierte la dirección a encendido secuencial.
 
-## Deteccion de Direccion
+---
 
-- **Sensor inferior (D10) activo**: Persona detectada abajo → secuencia SUBIR
-- **Sensor superior (D11) activo**: Persona detectada arriba → secuencia BAJAR
+## 5. Parámetros de Tiempo
 
-Los sensores IR funcionan por ruptura de haz: el emisor siempre esta encendido
-y el receptor detecta la luz infrarroja. Cuando un objeto interrumpe el haz,
-el receptor cambia de estado.
-
-La deteccion se realiza por flanco ascendente (cambio de LOW a HIGH), lo que
-evita falsos positivos por fluctuaciones de la señal.
-
-## Interrupcion durante Apagado
-
-Durante la secuencia de apagado (APAGANDO_SUBIR/APAGANDO_BAJAR) y la espera
-antes de apagar (ESPERANDO_APAGADO_SUBIR/ESPERANDO_APAGADO_BAJAR), el sistema
-lee constantemente los sensores IR.
-
-Si se detecta un nuevo movimiento:
-- Los LEDs que aun estan encendidos permanecen encendidos (no se apagan)
-- Los LEDs que ya se apagaron se prenden de nuevo secuencialmente
-- Se inicia la nueva secuencia de encendido en la direccion correspondiente
-- Cada LED respeta los 300ms de transicion
-
-## Codigo Fuente
-
-El codigo completo esta en `Lus-Escaleras-Arduino.ino`.
+- **Pausa de la escalera encendida (`TIEMPO_PAUSA_MS`):** 5000 ms (5 segundos).
+- **Velocidad de transición por escalón (`VELOCIDAD_TRANSICION_MS`):** 300 ms.
+- **Duración total aproximada del ciclo:** ~9.8 segundos (Encendido 2.4s + Pausa 5.0s + Apagado 2.4s).

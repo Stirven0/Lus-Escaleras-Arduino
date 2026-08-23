@@ -1,159 +1,145 @@
-/*
- * Escalera Inteligente con LEDs y Sensores IR
- * Arduino Uno - 8 escalones, 2 sensores IR
- *
- * Circuito:
- *   LEDs escalon 1-8 en pines D2-D9 (con resistencia 220 ohm)
- *   Sensor IR inferior receptor en D10 (con pull-up 10k ohm)
- *   Sensor IR superior receptor en D11 (con pull-up 10k ohm)
- *   Emisores IR conectados a 5V con resistencia 100 ohm (siempre encendidos)
- */
+const int PINES_LEDS[] = {2, 3, 4, 5, 6, 7, 8, 9};
+const int CANTIDAD_LEDS = 8;
 
-const int LED_PINS[] = {2, 3, 4, 5, 6, 7, 8, 9};
-const int NUM_LEDS = 8;
+const int PIN_SENSOR_INFERIOR = 10;
+const int PIN_SENSOR_SUPERIOR = 11;
 
-const int SENSOR_INFERIOR = 10;
-const int SENSOR_SUPERIOR = 11;
+const unsigned long TIEMPO_PAUSA_MS = 5000;
+const unsigned long VELOCIDAD_TRANSICION_MS = 300;
 
-const unsigned long TIEMPO_ESPERA = 5000;
-const unsigned long VELOCIDAD_TRANSICION = 300;
-
-enum Estado {
-  ESPERANDO,
-  SUBIENDO,
-  BAJANDO,
+enum EstadoSistema {
+  ESPERANDO_PERSONA,
+  SUBIENDO_ENCENDIENDO,
+  BAJANDO_ENCENDIENDO,
   ESPERANDO_APAGADO_SUBIR,
   ESPERANDO_APAGADO_BAJAR,
   APAGANDO_SUBIR,
   APAGANDO_BAJAR
 };
 
-Estado estadoActual = ESPERANDO;
-unsigned long tiempoInicioEspera = 0;
-unsigned long ultimoPasoApagado = 0;
-int ledActual = 0;
+EstadoSistema estadoActual = ESPERANDO_PERSONA;
 
-bool estadoAnteriorInferior = LOW;
-bool estadoAnteriorSuperior = LOW;
+unsigned long tiempoInicioPausa = 0;
+unsigned long tiempoUltimoApagado = 0;
+int escalonActual = 0;
+
+bool lecturaAnteriorInferior = LOW;
+bool lecturaAnteriorSuperior = LOW;
+
+bool detectarPasoPersona(int pinSensor, bool &estadoAnterior) {
+  bool lecturaActual = digitalRead(pinSensor);
+  bool personaDetectada = (estadoAnterior == LOW && lecturaActual == HIGH);
+  estadoAnterior = lecturaActual;
+  return personaDetectada;
+}
 
 void setup() {
-  for (int i = 0; i < NUM_LEDS; i++) {
-    pinMode(LED_PINS[i], OUTPUT);
-    digitalWrite(LED_PINS[i], LOW);
+  for (int i = 0; i < CANTIDAD_LEDS; i++) {
+    pinMode(PINES_LEDS[i], OUTPUT);
+    digitalWrite(PINES_LEDS[i], LOW);
   }
 
-  pinMode(SENSOR_INFERIOR, INPUT);
-  pinMode(SENSOR_SUPERIOR, INPUT);
+  pinMode(PIN_SENSOR_INFERIOR, INPUT);
+  pinMode(PIN_SENSOR_SUPERIOR, INPUT);
 
-  estadoAnteriorInferior = digitalRead(SENSOR_INFERIOR);
-  estadoAnteriorSuperior = digitalRead(SENSOR_SUPERIOR);
-}
-
-bool detectarFlanco(int pin, bool &estadoAnterior) {
-  bool actual = digitalRead(pin);
-  bool flanco = (estadoAnterior == LOW && actual == HIGH);
-  estadoAnterior = actual;
-  return flanco;
-}
-
-bool ledEncendido(int index) {
-  return digitalRead(LED_PINS[index]) == HIGH;
+  lecturaAnteriorInferior = digitalRead(PIN_SENSOR_INFERIOR);
+  lecturaAnteriorSuperior = digitalRead(PIN_SENSOR_SUPERIOR);
 }
 
 void loop() {
-  bool flancoInferior = detectarFlanco(SENSOR_INFERIOR, estadoAnteriorInferior);
-  bool flancoSuperior = detectarFlanco(SENSOR_SUPERIOR, estadoAnteriorSuperior);
+  bool personaEnInferior = detectarPasoPersona(PIN_SENSOR_INFERIOR, lecturaAnteriorInferior);
+  bool personaEnSuperior = detectarPasoPersona(PIN_SENSOR_SUPERIOR, lecturaAnteriorSuperior);
 
   switch (estadoActual) {
 
-    case ESPERANDO:
-      if (flancoInferior) {
-        estadoActual = SUBIENDO;
-        ledActual = 0;
-      } else if (flancoSuperior) {
-        estadoActual = BAJANDO;
-        ledActual = NUM_LEDS - 1;
+    case ESPERANDO_PERSONA:
+      if (personaEnInferior) {
+        estadoActual = SUBIENDO_ENCENDIENDO;
+        escalonActual = 0;
+      } else if (personaEnSuperior) {
+        estadoActual = BAJANDO_ENCENDIENDO;
+        escalonActual = CANTIDAD_LEDS - 1;
       }
       break;
 
-    case SUBIENDO:
-      digitalWrite(LED_PINS[ledActual], HIGH);
-      ledActual++;
-      if (ledActual >= NUM_LEDS) {
+    case SUBIENDO_ENCENDIENDO:
+      digitalWrite(PINES_LEDS[escalonActual], HIGH);
+      escalonActual++;
+      if (escalonActual >= CANTIDAD_LEDS) {
         estadoActual = ESPERANDO_APAGADO_SUBIR;
-        tiempoInicioEspera = millis();
+        tiempoInicioPausa = millis();
       }
-      delay(VELOCIDAD_TRANSICION);
+      delay(VELOCIDAD_TRANSICION_MS);
       break;
 
-    case BAJANDO:
-      digitalWrite(LED_PINS[ledActual], HIGH);
-      ledActual--;
-      if (ledActual < 0) {
+    case BAJANDO_ENCENDIENDO:
+      digitalWrite(PINES_LEDS[escalonActual], HIGH);
+      escalonActual--;
+      if (escalonActual < 0) {
         estadoActual = ESPERANDO_APAGADO_BAJAR;
-        tiempoInicioEspera = millis();
+        tiempoInicioPausa = millis();
       }
-      delay(VELOCIDAD_TRANSICION);
+      delay(VELOCIDAD_TRANSICION_MS);
       break;
 
     case ESPERANDO_APAGADO_SUBIR:
-      if (flancoInferior) {
-        estadoActual = SUBIENDO;
-        ledActual = 0;
-      } else if (flancoSuperior) {
-        estadoActual = BAJANDO;
-        ledActual = NUM_LEDS - 1;
-      } else if (millis() - tiempoInicioEspera >= TIEMPO_ESPERA) {
+      if (personaEnInferior) {
+        estadoActual = SUBIENDO_ENCENDIENDO;
+        escalonActual = 0;
+      } else if (personaEnSuperior) {
+        estadoActual = BAJANDO_ENCENDIENDO;
+        escalonActual = CANTIDAD_LEDS - 1;
+      } else if (millis() - tiempoInicioPausa >= TIEMPO_PAUSA_MS) {
         estadoActual = APAGANDO_SUBIR;
-        ledActual = 0;
-        ultimoPasoApagado = millis();
+        escalonActual = 0;
+        tiempoUltimoApagado = millis();
       }
       break;
 
     case ESPERANDO_APAGADO_BAJAR:
-      if (flancoInferior) {
-        estadoActual = SUBIENDO;
-        ledActual = 0;
-      } else if (flancoSuperior) {
-        estadoActual = BAJANDO;
-        ledActual = NUM_LEDS - 1;
-      } else if (millis() - tiempoInicioEspera >= TIEMPO_ESPERA) {
+      if (personaEnInferior) {
+        estadoActual = SUBIENDO_ENCENDIENDO;
+        escalonActual = 0;
+      } else if (personaEnSuperior) {
+        estadoActual = BAJANDO_ENCENDIENDO;
+        escalonActual = CANTIDAD_LEDS - 1;
+      } else if (millis() - tiempoInicioPausa >= TIEMPO_PAUSA_MS) {
         estadoActual = APAGANDO_BAJAR;
-        ledActual = NUM_LEDS - 1;
-        ultimoPasoApagado = millis();
+        escalonActual = CANTIDAD_LEDS - 1;
+        tiempoUltimoApagado = millis();
       }
       break;
 
     case APAGANDO_SUBIR:
-      if (flancoInferior) {
-        estadoActual = SUBIENDO;
-        ledActual = 0;
-      } else if (flancoSuperior) {
-        estadoActual = BAJANDO;
-        ledActual = NUM_LEDS - 1;
-      } else if (millis() - ultimoPasoApagado >= VELOCIDAD_TRANSICION) {
-        digitalWrite(LED_PINS[ledActual], LOW);
-        ledActual++;
-        ultimoPasoApagado = millis();
-        if (ledActual >= NUM_LEDS) {
-          estadoActual = ESPERANDO;
+      if (personaEnInferior) {
+        estadoActual = SUBIENDO_ENCENDIENDO;
+        escalonActual = 0;
+      } else if (personaEnSuperior) {
+        estadoActual = BAJANDO_ENCENDIENDO;
+        escalonActual = CANTIDAD_LEDS - 1;
+      } else if (millis() - tiempoUltimoApagado >= VELOCIDAD_TRANSICION_MS) {
+        digitalWrite(PINES_LEDS[escalonActual], LOW);
+        escalonActual++;
+        tiempoUltimoApagado = millis();
+        if (escalonActual >= CANTIDAD_LEDS) {
+          estadoActual = ESPERANDO_PERSONA;
         }
       }
       break;
 
     case APAGANDO_BAJAR:
-      if (flancoInferior) {
-        estadoActual = SUBIENDO;
-        ledActual = 0;
-      } else if (flancoSuperior) {
-        estadoActual = BAJANDO;
-        ledActual = NUM_LEDS - 1;
-      } else if (millis() - ultimoPasoApagado >= VELOCIDAD_TRANSICION) {
-        digitalWrite(LED_PINS[ledActual], LOW);
-        ledActual--;
-        ultimoPasoApagado = millis();
-        if (ledActual < 0) {
-          estadoActual = ESPERANDO;
+      if (personaEnInferior) {
+        estadoActual = SUBIENDO_ENCENDIENDO;
+        escalonActual = 0;
+      } else if (personaEnSuperior) {
+        estadoActual = BAJANDO_ENCENDIENDO;
+        escalonActual = CANTIDAD_LEDS - 1;
+      } else if (millis() - tiempoUltimoApagado >= VELOCIDAD_TRANSICION_MS) {
+        digitalWrite(PINES_LEDS[escalonActual], LOW);
+        escalonActual--;
+        tiempoUltimoApagado = millis();
+        if (escalonActual < 0) {
+          estadoActual = ESPERANDO_PERSONA;
         }
       }
       break;

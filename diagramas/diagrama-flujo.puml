@@ -1,56 +1,70 @@
 @startuml diagrama-flujo
-title Diagrama de Flujo - Escalera Inteligente
+title Diagrama de Flujo del Programa - Escalera Inteligente
+
+skinparam shadowing true
+skinparam activity {
+  BackgroundColor #F0F9FF
+  BorderColor #0284C7
+  FontName Arial
+  FontSize 12
+}
 
 start
 
 :Inicio del programa;
 
-:Inicializar pines\n LEDs: D2-D9 (salida)\n Sensores: D10, D11 (entrada);
+:Inicializar pines de salida:\nLEDs en D2 a D9 (LOW);
 
-:Apagar todos los LEDs;
+:Inicializar pines de entrada:\nSensores IR en D10 y D11;
 
-repeat
-
-  :Leer sensores IR;
-
-  if (Sensor inferior detecta?) then (si)
-    :Estado = SUBIENDO;
-    :Indice LED = 0;
-  elseif (Sensor superior detecta?) then (si)
-    :Estado = BAJANDO;
-    :Indice LED = 7;
-  endif
-
-  if (Estado == SUBIENDO?) then (si)
-    repeat
-      :Encender LED[indice];
-      :Indice++;
-      :Delay 300ms;
-    repeat while (indice < 8) is (no)
-    :Esperar 5 segundos;
-    repeat
-      :Apagar LED[indice];
-      :Indice++;
-      :Delay 300ms;
-    repeat while (indice < 8) is (no)
-
-  elseif (Estado == BAJANDO?) then (si)
-    repeat
-      :Encender LED[indice];
-      :Indice--;
-      :Delay 300ms;
-    repeat while (indice >= 0) is (no)
-    :Esperar 5 segundos;
-    repeat
-      :Apagar LED[indice];
-      :Indice--;
-      :Delay 300ms;
-    repeat while (indice >= 0) is (no)
-  endif
-
-  :Apagar todos los LEDs;
-  :Estado = ESPERANDO;
+:Leer estado inicial de sensores;
 
 repeat
+  :Leer sensores IR y detectar flancos (LOW -> HIGH);\n(personaEnInferior / personaEnSuperior);
+
+  switch (Estado Actual)
+  case ( ESPERANDO_PERSONA )
+    if (personaEnInferior?) then (sí)
+      :Estado = SUBIENDO_ENCENDIENDO;\nescalonActual = 0;
+    elseif (personaEnSuperior?) then (sí)
+      :Estado = BAJANDO_ENCENDIENDO;\nescalonActual = 7;
+    endif
+
+  case ( SUBIENDO_ENCENDIENDO )
+    :Encender LED[escalonActual];
+    :escalonActual++;
+    if (escalonActual >= 8?) then (sí)
+      :Estado = ESPERANDO_APAGADO_SUBIR;\ntiempoInicioPausa = millis();
+    endif
+    :Esperar 300ms (delay);
+
+  case ( BAJANDO_ENCENDIENDO )
+    :Encender LED[escalonActual];
+    :escalonActual--;
+    if (escalonActual < 0?) then (sí)
+      :Estado = ESPERANDO_APAGADO_BAJAR;\ntiempoInicioPausa = millis();
+    endif
+    :Esperar 300ms (delay);
+
+  case ( ESPERANDO_APAGADO_SUBIR / BAJANDO )
+    if (Nuevo sensor activado?) then (sí)
+      :Reiniciar secuencia de encendido;
+    elseif (Pasaron 5 segundos?) then (sí)
+      :Estado = APAGANDO;\ntiempoUltimoApagado = millis();
+    endif
+
+  case ( APAGANDO_SUBIR / BAJANDO )
+    if (Nuevo sensor activado?) then (sí)
+      :Revertir inmediatamente a encendido;
+    elseif (Transcurrieron 300ms sin bloqueo?) then (sí)
+      :Apagar LED[escalonActual];
+      :Avanzar/retroceder escalón;
+      if (Todos los LEDs apagados?) then (sí)
+        :Estado = ESPERANDO_PERSONA;
+      endif
+    endif
+  endswitch
+
+repeat while (Sistema activo)
 
 @enduml

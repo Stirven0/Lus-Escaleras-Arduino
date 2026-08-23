@@ -1,58 +1,75 @@
-# Escalera Inteligente
+# Escalera Inteligente con Arduino Uno
 
-Maqueta de escaleras con iluminacion LED inteligente controlada por Arduino Uno.
+Maqueta de escaleras con iluminación LED inteligente controlada por **Arduino Uno**.
 
-## Descripcion
+---
 
-Sistema de iluminacion automatica que detecta movimiento mediante sensores infrarrojos
-y enciende 8 LEDs de forma secuencial segun la direccion de desplazamiento.
+## 📌 Descripción
 
-## Componentes
+Sistema de iluminación automática para escaleras de **8 escalones**. Utiliza sensores infrarrojos (IR) en la parte inferior y superior para detectar la presencia de personas y encender los LEDs en secuencia según la dirección de desplazamiento.
 
-| Cantidad | Componente |
-|----------|------------|
-| 1 | Arduino Uno |
-| 8 | LED blanco |
-| 8 | Resistencia 220 ohm |
-| 2 | LED emisor infrarrojo |
-| 2 | Resistencia 100 ohm |
-| 2 | Fototransistor receptor IR |
-| 2 | Resistencia 10k ohm |
-| — | Cables jumper y protoboard |
+---
 
-## Comportamiento
+## ⚡ Simulación Interactiva en Tinkercad
 
-**Subiendo** (sensor inferior detecta):
-LEDs 1→2→3→4→5→6→7→8 encendidos → espera 5s → apagados 1→2→3→4→5→6→7→8
+Puedes probar el circuito y el funcionamiento de las luces directamente desde tu navegador:
 
-**Bajando** (sensor superior detecta):
-LEDs 8→7→6→5→4→3→2→1 encendidos → espera 5s → apagados 8→7→6→5→4→3→2→1
+🔗 **[Ver Simulación en Tinkercad](https://www.tinkercad.com/things/0pheYHJu6yR/editel?sharecode=S3InYTMaIszsQmBVlUAJu1_tCbUvaevH3J8RIkOQQLU)**
 
-Transicion: 300ms por escalon.
+![Simulación del Circuito Tinkercad](docs/imagenes/Lus%20Escaleras%20Arduino.png)
 
-## Cableado
+---
 
-```
-LEDs:      D2-D9 → 220 ohm → LED → GND
-Sensor IR: 5V → 100 ohm → Emisor → GND
-Receptor:  5V → 10k ohm → Colector (D10/D11), Emisor → GND
-```
+## 🛠️ Componentes Hardware
 
-## Compilar y cargar
+| Cantidad | Componente | Conexión |
+|:--------:|------------|----------|
+| 1 | Arduino Uno | Alimentación por USB |
+| 8 | LED Blanco (Escalones 1 al 8) | Pines D2 a D9 |
+| 8 | Resistencia 220 Ω | En serie con cada LED |
+| 2 | LED Emisor Infrarrojo | Conectados a 5V con resistencia 100 Ω |
+| 2 | Fototransistor Receptor IR | Pines D10 (Inferior) y D11 (Superior) con pull-up 10k Ω |
+| — | Protoboard y Jumpers | Interconexión de componentes |
+
+---
+
+## 🔄 Funcionamiento
+
+* **Subiendo (Sensor Inferior en Pin D10):**
+  * Encendido secuencial: Escalón 1 $\rightarrow$ 8 (300 ms por escalón).
+  * Pausa: 5 segundos encendidos.
+  * Apagado no bloqueante: Escalón 1 $\rightarrow$ 8 (300 ms por escalón).
+
+* **Bajando (Sensor Superior en Pin D11):**
+  * Encendido secuencial: Escalón 8 $\rightarrow$ 1 (300 ms por escalón).
+  * Pausa: 5 segundos encendidos.
+  * Apagado no bloqueante: Escalón 8 $\rightarrow$ 1 (300 ms por escalón).
+
+---
+
+## 💻 Compilar y Cargar
+
+Para compilar y subir el programa mediante `arduino-cli`:
 
 ```bash
-# Compilar
+# Compilar el código
 arduino-cli compile --fqbn arduino:avr:uno Lus-Escaleras-Arduino.ino
 
-# Cargar
+# Cargar al Arduino Uno (ajustar puerto según corresponda)
 arduino-cli upload --fqbn arduino:avr:uno --port /dev/ttyACM0 Lus-Escaleras-Arduino.ino
 ```
 
-## Documentacion
+---
 
-Visita la [pagina del proyecto](https://Stirven0.github.io/Lus-Escaleras-Arduino/)
-para ver diagramas de flujo, procesos y EPS.
+## 📊 Diagramas y Documentación
 
-## Licencia
+Toda la documentación detallada está disponible en las páginas del proyecto y en el directorio `docs/`:
 
-[MIT](LICENSE)
+* 📐 **[Circuito y Conexiones](docs/circuito.md)** (Esquema de pines, simulación en Tinkercad y Diagrama EPS)
+* ⚙️ **[Lógica del Programa](docs/logica.md)** (Máquina de Estados, Diagrama de Flujo y Diagrama de Procesos)
+
+---
+
+## 📄 Licencia
+
+Este proyecto está bajo la Licencia [MIT](LICENSE).
