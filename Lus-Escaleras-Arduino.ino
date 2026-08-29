@@ -29,6 +29,8 @@ const float DIST_SUPERIOR_MAX = 50.0;
 
 const unsigned long TIEMPO_SIN_CONTACTO_MAX = 2000;
 
+const int CANTIDAD_MUESTRAS = 3;
+
 enum EstadoSistema {
   ESPERANDO,
   ACERCAMIENTO,
@@ -37,7 +39,7 @@ enum EstadoSistema {
 
 EstadoSistema estadoActual = ESPERANDO;
 
-float distanciaSuperiorAnterior = -1.0;
+int escalonFocoActual = -1;
 unsigned long tiempoUltimoContacto = 0;
 
 float medirDistancia(int pinTrig, int pinEcho) {
@@ -47,9 +49,32 @@ float medirDistancia(int pinTrig, int pinEcho) {
   delayMicroseconds(10);
   digitalWrite(pinTrig, LOW);
 
-  long duracion = pulseIn(pinEcho, HIGH, 30000);
+  long duracion = pulseIn(pinEcho, HIGH, 10000);
   if (duracion == 0) return -1.0;
   return duracion * 0.034 / 2.0;
+}
+
+float medirDistanciaFiltrada(int pinTrig, int pinEcho) {
+  float muestras[CANTIDAD_MUESTRAS];
+
+  for (int i = 0; i < CANTIDAD_MUESTRAS; i++) {
+    muestras[i] = medirDistancia(pinTrig, pinEcho);
+    if (i < CANTIDAD_MUESTRAS - 1) {
+      delayMicroseconds(40000);
+    }
+  }
+
+  for (int i = 0; i < CANTIDAD_MUESTRAS - 1; i++) {
+    for (int j = i + 1; j < CANTIDAD_MUESTRAS; j++) {
+      if (muestras[j] < muestras[i]) {
+        float temp = muestras[i];
+        muestras[i] = muestras[j];
+        muestras[j] = temp;
+      }
+    }
+  }
+
+  return muestras[CANTIDAD_MUESTRAS / 2];
 }
 
 void apagarTodos() {
@@ -87,8 +112,9 @@ void setup() {
 }
 
 void loop() {
-  float distanciaInferior = medirDistancia(TRIG_INFERIOR, ECHO_INFERIOR);
-  float distanciaSuperior = medirDistancia(TRIG_SUPERIOR, ECHO_SUPERIOR);
+  float distanciaInferior = medirDistanciaFiltrada(TRIG_INFERIOR, ECHO_INFERIOR);
+  delayMicroseconds(40000);
+  float distanciaSuperior = medirDistanciaFiltrada(TRIG_SUPERIOR, ECHO_SUPERIOR);
 
   bool objetoInferior = (distanciaInferior >= 0 && distanciaInferior <= DIST_INFERIOR_MAX);
   bool objetoSuperior = (distanciaSuperior >= DIST_SUPERIOR_MIN && distanciaSuperior <= DIST_SUPERIOR_MAX);
@@ -98,7 +124,7 @@ void loop() {
     case ESPERANDO:
       if (objetoSuperior) {
         estadoActual = EN_ESCALERA;
-        distanciaSuperiorAnterior = distanciaSuperior;
+        escalonFocoActual = -1;
         tiempoUltimoContacto = millis();
       } else if (objetoInferior) {
         estadoActual = ACERCAMIENTO;
@@ -108,7 +134,7 @@ void loop() {
     case ACERCAMIENTO:
       if (objetoSuperior) {
         estadoActual = EN_ESCALERA;
-        distanciaSuperiorAnterior = distanciaSuperior;
+        escalonFocoActual = -1;
         tiempoUltimoContacto = millis();
       } else if (objetoInferior) {
         int cantidadLEDs = map(distanciaInferior, DIST_INFERIOR_MAX, 0, 1, CANTIDAD_LEDS);
@@ -127,8 +153,10 @@ void loop() {
         int escalonActual = map(distanciaSuperior, DIST_SUPERIOR_MIN, DIST_SUPERIOR_MAX, CANTIDAD_LEDS - 1, 0);
         escalonActual = constrain(escalonActual, 0, CANTIDAD_LEDS - 1);
 
-        encenderFoco(escalonActual, 1);
-        distanciaSuperiorAnterior = distanciaSuperior;
+        if (escalonActual != escalonFocoActual) {
+          encenderFoco(escalonActual, 1);
+          escalonFocoActual = escalonActual;
+        }
       } else if (millis() - tiempoUltimoContacto >= TIEMPO_SIN_CONTACTO_MAX) {
         apagarTodos();
         estadoActual = ESPERANDO;
