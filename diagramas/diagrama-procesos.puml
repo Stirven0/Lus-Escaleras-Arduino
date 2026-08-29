@@ -9,30 +9,32 @@ skinparam swimlane {
   FontSize 12
 }
 
-|Sensores IR|
+|Sensores Ultrasonido|
 start
-:Detección de presencia física\n(Corte de haz infrarrojo);
-:Generación de pulso eléctrico\n(Cambio de nivel digital);
+:Emisión de pulso de ultrasonido\n(Trig 10µs);
+:Recepción del eco\n(Echo -> duración del pulso);
 
 |Arduino Uno|
-:Lectura continua de pines D10 y D11;
-:Filtrado de flanco ascendente (LOW -> HIGH);
+:Conversión de tiempo a distancia\n(duración * 0.034 / 2);
 :Evaluación del estado actual del sistema;
-
-if (¿Hay evento de sensor o tiempo cumplido?) then (sí)
-  :Selección del estado destino en la máquina de estados;
-  :Cálculo de secuencia y tiempos (300ms / 5000ms);
-
-  |Salida LEDs|
-  if (¿Acción requerida?) then (Encendido)
-    :Envío de señal HIGH a pines D2-D9\n(Secuencial de 1 a 8 o 8 a 1);
-  else (Apagado)
-    :Envío de señal LOW a pines D2-D9\n(Secuencial no bloqueante);
+if (¿Hay objeto en alcance?) then (sí)
+  if (¿Superior ve objeto?) then (sí)
+    :Mapear distancia a escalón\n(5cm -> 8, 50cm -> 1);
+    |Salida LEDs|
+    :Encender foco de 3 LEDs\n(escalón ± 1);
+  else (no)
+    :Calcular N LEDs por acercamiento\n(map distancia 20->0, 1->8);
+    |Salida LEDs|
+    :Encender N LEDs desde abajo\n(ramp up);
   endif
-
 else (no)
-  |Arduino Uno|
-  :Mantener lectura continua de sensores;
+  if (¿Timeout 2000ms sin contacto?) then (sí)
+    |Salida LEDs|
+    :Apagar todos los LEDs;
+  else (no)
+    |Arduino Uno|
+    :Continuar monitoreo;
+  endif
 endif
 
 |Arduino Uno|

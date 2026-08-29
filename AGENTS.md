@@ -3,8 +3,8 @@
 ## Qué es este proyecto
 
 Maqueta de escaleras inteligentes con iluminación LED controlada por Arduino Uno.
-Proyecto universitario: 8 escalones con LEDs blancos, 2 sensores IR (arriba/abajo),
-alimentación por USB del Arduino.
+Proyecto universitario: 8 escalones con LEDs blancos, 2 sensores de ultrasonido
+HC-SR04 (arriba/abajo), alimentación por USB del Arduino.
 
 ## Compilar y cargar
 
@@ -20,6 +20,7 @@ arduino-cli upload --fqbn arduino:avr:uno --port /dev/ttyACM0 Lus-Escaleras-Ardu
 
 ```
 Lus-Escaleras-Arduino.ino    # Código principal
+test-ultrasonidos/            # Sketch de prueba de sensores (con Serial)
 diagramas/                    # Fuentes PlantUML
 docs/                         # Documentación GitHub Pages
 ```
@@ -36,9 +37,13 @@ java -jar /home/stirven/Compyler/doc/plantuml-mit-1.2026.6.jar -tpng diagramas/*
 - Código en español (nombres de variables, funciones, comentarios)
 - Sin librerías externas, solo Arduino core
 - Sin debug Serial en producción
-- Resistencias: 220 ohm para LEDs blancos, 100 ohm para IR emisor, 10k ohm pull-up para IR receptor
-- Pinout fijo: LEDs en D2-D9, sensores en D10 (inferior) y D11 (superior)
-- Transición: 300ms por escalón, 5 segundos de pausa
-- Detección por flanco ascendente (cambio LOW→HIGH)
-- Apagado no bloqueante: usa millis() en vez de delay()
-- Interrupción de apagado: si detecta nuevo sensor durante apagado, revierte a encendido
+- Resistencias: 220 ohm para LEDs blancos
+- Pinout fijo:
+  - LEDs en D2-D9
+  - Ultrasonido superior: Trig D10, Echo D11
+  - Ultrasonido inferior: Trig D12, Echo D13
+  - VCC/GND de sensores a 5V/GND
+- Sensor inferior (0-20cm): ramp up de LEDs mientras la persona se acerca
+- Sensor superior (5-50cm): foco de 3 LEDs que sigue la posición de la persona
+- Mapeo distancia→escalón: superior 5cm=escalón 8, 50cm=escalón 1
+- Timeout 2s sin contacto para volver a ESPERANDO

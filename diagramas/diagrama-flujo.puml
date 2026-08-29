@@ -15,53 +15,39 @@ start
 
 :Inicializar pines de salida:\nLEDs en D2 a D9 (LOW);
 
-:Inicializar pines de entrada:\nSensores IR en D10 y D11;
-
-:Leer estado inicial de sensores;
+:Inicializar sensores ultrasonido:\nSuperior Trig/echo D10/D11\nInferior Trig/echo D12/D13;
 
 repeat
-  :Leer sensores IR y detectar flancos (LOW -> HIGH);\n(personaEnInferior / personaEnSuperior);
+  :Medir distancia sensor superior\n(Función medirDistancia);
+  :Medir distancia sensor inferior\n(Función medirDistancia);
 
   switch (Estado Actual)
-  case ( ESPERANDO_PERSONA )
-    if (personaEnInferior?) then (sí)
-      :Estado = SUBIENDO_ENCENDIENDO;\nescalonActual = 0;
-    elseif (personaEnSuperior?) then (sí)
-      :Estado = BAJANDO_ENCENDIENDO;\nescalonActual = 7;
+  case ( ESPERANDO )
+    if (¿Superior detecta 5-50cm?) then (sí)
+      :Estado = EN_ESCALERA;\nguardar distancia y tiempo;
+    elseif (¿Inferior detecta 0-20cm?) then (sí)
+      :Estado = ACERCAMIENTO;
     endif
 
-  case ( SUBIENDO_ENCENDIENDO )
-    :Encender LED[escalonActual];
-    :escalonActual++;
-    if (escalonActual >= 8?) then (sí)
-      :Estado = ESPERANDO_APAGADO_SUBIR;\ntiempoInicioPausa = millis();
-    endif
-    :Esperar 300ms (delay);
-
-  case ( BAJANDO_ENCENDIENDO )
-    :Encender LED[escalonActual];
-    :escalonActual--;
-    if (escalonActual < 0?) then (sí)
-      :Estado = ESPERANDO_APAGADO_BAJAR;\ntiempoInicioPausa = millis();
-    endif
-    :Esperar 300ms (delay);
-
-  case ( ESPERANDO_APAGADO_SUBIR / BAJANDO )
-    if (Nuevo sensor activado?) then (sí)
-      :Reiniciar secuencia de encendido;
-    elseif (Pasaron 5 segundos?) then (sí)
-      :Estado = APAGANDO;\ntiempoUltimoApagado = millis();
+  case ( ACERCAMIENTO )
+    if (¿Superior detecta 5-50cm?) then (sí)
+      :Estado = EN_ESCALERA;\nguardar distancia y tiempo;
+    elseif (¿Inferior detecta 0-20cm?) then (sí)
+      :cantidadLEDs = map(distancia, 20->0, 1->8);
+      :Encender primeros N LEDs\n(ramp up desde abajo);
+    else (no)
+      :Apagar todos;
+      :Estado = ESPERANDO;
     endif
 
-  case ( APAGANDO_SUBIR / BAJANDO )
-    if (Nuevo sensor activado?) then (sí)
-      :Revertir inmediatamente a encendido;
-    elseif (Transcurrieron 300ms sin bloqueo?) then (sí)
-      :Apagar LED[escalonActual];
-      :Avanzar/retroceder escalón;
-      if (Todos los LEDs apagados?) then (sí)
-        :Estado = ESPERANDO_PERSONA;
-      endif
+  case ( EN_ESCALERA )
+    if (¿Superior detecta 5-50cm?) then (sí)
+      :escalon = map(distancia, 5->50cm, 7->0);
+      :Encender foco de 3 LEDs\n(escalon ± 1);
+      :Actualizar tiempo de contacto;
+    elseif (¿Pasaron 2000ms sin contacto?) then (sí)
+      :Apagar todos los LEDs;
+      :Estado = ESPERANDO;
     endif
   endswitch
 

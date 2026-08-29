@@ -6,49 +6,28 @@ skinparam shadowing true
 skinparam state {
   BackgroundColor<<Reposo>> #E0F2FE
   BorderColor<<Reposo>> #0284C7
-  BackgroundColor<<Encendido>> #FEF08A
-  BorderColor<<Encendido>> #CA8A04
-  BackgroundColor<<Espera>> #FED7AA
-  BorderColor<<Espera>> #EA580C
-  BackgroundColor<<Apagado>> #FCA5A5
-  BorderColor<<Apagado>> #DC2626
+  BackgroundColor<<Acercamiento>> #BAE6FD
+  BorderColor<<Acercamiento>> #0369A1
+  BackgroundColor<<Escalera>> #86EFAC
+  BorderColor<<Escalera>> #15803D
   FontName Arial
   FontSize 12
 }
 
-[*] --> ESPERANDO_PERSONA
+[*] --> ESPERANDO
 
-state "ESPERANDO_PERSONA" as ESPERANDO_PERSONA <<Reposo>> : Luces apagadas\nSensores activos
+state "ESPERANDO" as ESPERANDO <<Reposo>> : Luces apagadas\nMonitoreo de sensores
 
-state "SUBIENDO_ENCENDIENDO" as SUBIENDO_ENCENDIENDO <<Encendido>> : Encendiendo LEDs 1 -> 8\n(300ms por escalón)
-state "BAJANDO_ENCENDIENDO" as BAJANDO_ENCENDIENDO <<Encendido>> : Encendiendo LEDs 8 -> 1\n(300ms por escalón)
+state "ACERCAMIENTO" as ACERCAMIENTO <<Acercamiento>> : Ramp up de LEDs\nsegún acercamiento (0-20cm)
 
-state "ESPERANDO_APAGADO_SUBIR" as ESPERANDO_APAGADO_SUBIR <<Espera>> : Escalones encendidos\nPausa de 5 segundos
-state "ESPERANDO_APAGADO_BAJAR" as ESPERANDO_APAGADO_BAJAR <<Espera>> : Escalones encendidos\nPausa de 5 segundos
+state "EN_ESCALERA" as EN_ESCALERA <<Escalera>> : Foco de 3 LEDs\nsiguiendo a la persona (5-50cm)
 
-state "APAGANDO_SUBIR" as APAGANDO_SUBIR <<Apagado>> : Apagando LEDs 1 -> 8\n(300ms por escalón, millis)
-state "APAGANDO_BAJAR" as APAGANDO_BAJAR <<Apagado>> : Apagando LEDs 8 -> 1\n(300ms por escalón, millis)
+ESPERANDO --> ACERCAMIENTO : Inferior detecta\n(0-20cm)
+ESPERANDO --> EN_ESCALERA : Superior detecta\n(5-50cm)
 
-ESPERANDO_PERSONA --> SUBIENDO_ENCENDIENDO : Sensor Inferior (D10)
-ESPERANDO_PERSONA --> BAJANDO_ENCENDIENDO : Sensor Superior (D11)
+ACERCAMIENTO --> EN_ESCALERA : Superior detecta\n(5-50cm)
+ACERCAMIENTO --> ESPERANDO : Inferior pierde objeto
 
-SUBIENDO_ENCENDIENDO --> ESPERANDO_APAGADO_SUBIR : Todos los LEDs encendidos
-BAJANDO_ENCENDIENDO --> ESPERANDO_APAGADO_BAJAR : Todos los LEDs encendidos
-
-ESPERANDO_APAGADO_SUBIR --> SUBIENDO_ENCENDIENDO : Sensor Inferior (Reinicio)
-ESPERANDO_APAGADO_SUBIR --> BAJANDO_ENCENDIENDO : Sensor Superior (Cambio dir.)
-ESPERANDO_APAGADO_SUBIR --> APAGANDO_SUBIR : Pasan 5 segundos
-
-ESPERANDO_APAGADO_BAJAR --> SUBIENDO_ENCENDIENDO : Sensor Inferior (Cambio dir.)
-ESPERANDO_APAGADO_BAJAR --> BAJANDO_ENCENDIENDO : Sensor Superior (Reinicio)
-ESPERANDO_APAGADO_BAJAR --> APAGANDO_BAJAR : Pasan 5 segundos
-
-APAGANDO_SUBIR --> SUBIENDO_ENCENDIENDO : Sensor Inferior (Interrupción)
-APAGANDO_SUBIR --> BAJANDO_ENCENDIENDO : Sensor Superior (Interrupción)
-APAGANDO_SUBIR --> ESPERANDO_PERSONA : Todos los LEDs apagados
-
-APAGANDO_BAJAR --> SUBIENDO_ENCENDIENDO : Sensor Inferior (Interrupción)
-APAGANDO_BAJAR --> BAJANDO_ENCENDIENDO : Sensor Superior (Interrupción)
-APAGANDO_BAJAR --> ESPERANDO_PERSONA : Todos los LEDs apagados
+EN_ESCALERA --> ESPERANDO : Timeout 2000ms\nsin contacto
 
 @enduml

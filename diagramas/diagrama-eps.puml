@@ -9,17 +9,18 @@ skinparam rectangle {
 }
 
 rectangle "ENTRADA" as entrada #E0F2FE {
-  rectangle "Sensor IR Inferior\n(Receptor en Pin D10)" as s1 #BAE6FD
-  rectangle "Sensor IR Superior\n(Receptor en Pin D11)" as s2 #BAE6FD
+  rectangle "Sensor Ultrasonido Superior\n(Trig/Echo en D10/D11, 5-50cm)" as s1 #BAE6FD
+  rectangle "Sensor Ultrasonido Inferior\n(Trig/Echo en D12/D13, 0-20cm)" as s2 #BAE6FD
   rectangle "Alimentación 5V\n(Puerto USB Arduino)" as s3 #BAE6FD
 }
 
 rectangle "PROCESO" as proceso #DCFCE7 {
   rectangle "Arduino Uno\n(ATmega328P)" as a1 #86EFAC
-  rectangle "Lectura de Flancos\n(Detección LOW -> HIGH)" as a2 #86EFAC
-  rectangle "Evaluación de Dirección\n(Subir / Bajar)" as a3 #86EFAC
-  rectangle "Máquina de Estados\n(7 Estados de Control)" as a4 #86EFAC
-  rectangle "Temporización no Bloqueante\n(300ms paso / 5s espera)" as a5 #86EFAC
+  rectangle "medirDistancia()\n(Trig/Echo → cm)" as a2 #86EFAC
+  rectangle "Ramp Up por Acercamiento\n(Inferior 0-20cm)" as a3 #86EFAC
+  rectangle "Mapeo Distancia → Escalón\n(Superior 5-50cm)" as a4 #86EFAC
+  rectangle "Foco de 3 LEDs\n(Seguimiento de persona)" as a5 #86EFAC
+  rectangle "Timeout Sin Contacto\n(2000ms)" as a6 #86EFAC
 }
 
 rectangle "SALIDA" as salida #FEE2E2 {
@@ -33,22 +34,23 @@ rectangle "SALIDA" as salida #FEE2E2 {
   rectangle "LED Escalón 8 (Pin D9 + 220 Ω)" as o8 #FCA5A5
 }
 
-s1 --> a1 : Señal D10
-s2 --> a1 : Señal D11
+s1 --> a1 : Neutro Trig D10 / Echo D11
+s2 --> a1 : Neutro Trig D12 / Echo D13
 s3 --> a1 : Voltaje 5V
 
 a1 --> a2
 a2 --> a3
 a3 --> a4
 a4 --> a5
+a5 --> a6
 
-a5 --> o1 : Control D2
-a5 --> o2 : Control D3
-a5 --> o3 : Control D4
-a5 --> o4 : Control D5
-a5 --> o5 : Control D6
-a5 --> o6 : Control D7
-a5 --> o7 : Control D8
-a5 --> o8 : Control D9
+a6 --> o1 : Control D2
+a6 --> o2 : Control D3
+a6 --> o3 : Control D4
+a6 --> o4 : Control D5
+a6 --> o5 : Control D6
+a6 --> o6 : Control D7
+a6 --> o7 : Control D8
+a6 --> o8 : Control D9
 
 @enduml
