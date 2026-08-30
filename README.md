@@ -18,11 +18,21 @@ a la persona con un foco de luz mientras sube o baja.
 
 | Cantidad | Componente | Conexión |
 |:--------:|------------|----------|
-| 1 | Arduino Uno | Alimentación por USB |
+| 1 | Arduino Uno | Alimentación por USB (5V) |
 | 8 | LED Blanco (Escalones 1 al 8) | Pines D2 a D9 |
 | 8 | Resistencia 220 Ω | En serie con cada LED |
-| 2 | Sensor Ultrasonido HC-SR04 | Superior Trig/echo D10/D11, Inferior Trig/echo D12/D13 |
+| 2 | Sensor Ultrasonido HC-SR04 | Superior Trig/Echo D10/D11, Inferior Trig/Echo D12/D13 |
 | — | Protoboard y Jumpers | Interconexión de componentes |
+
+---
+
+## 🌐 Simulación Interactiva en Tinkercad
+
+Puedes probar el circuito completo y ejecutar la simulación de manera interactiva directamente desde el navegador:
+
+🔗 **[Abrir Simulador en Tinkercad](https://www.tinkercad.com/things/0pheYHJu6yR-lus-escaleras-arduino/editel?returnTo=https%3A%2F%2Fwww.tinkercad.com%2Fdashboard&sharecode=S3InYTMaIszsQmBVlUAJu1_tCbUvaevH3J8RIkOQQLU)**
+
+![Circuito en Tinkercad](docs/imagenes/circuito-tinkercad.png)
 
 ---
 

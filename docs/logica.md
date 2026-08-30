@@ -48,30 +48,45 @@ Describe la interacción entre el hardware físico (sensores), el microcontrolad
 ## 4. Conceptos Clave de Implementación
 
 ### Medición de Distancia (`medirDistancia`)
-Función estándar para HC-SR04: emite pulso de trig (10 µs), mide el ancho del pulso de echo con `pulseIn()` y convierte a centímetros:
+Función básica para HC-SR04: emite pulso de Trigger (10 µs), mide el ancho del pulso en Echo con `pulseIn()` (timeout de 10 ms) y convierte a centímetros:
 ```cpp
-long duracion = pulseIn(pinEcho, HIGH, 30000);
+long duracion = pulseIn(pinEcho, HIGH, 10000);
 if (duracion == 0) return -1.0;      // sin eco (objeto fuera de rango)
 return duracion * 0.034 / 2.0;       // cm
 ```
-Si no hay eco en 30 ms, se devuelve `-1` para ignorar la lectura.
 
-### Ramp Up por Acercamiento (sensor inferior)
-Mientras la persona se acerca (distancia de 20 cm a 0 cm), aumenta el número de LEDs encendidos desde la parte baja:
+### Filtrado por Mediana (`medirDistanciaFiltrada`)
+Para evitar lecturas erráticas producidas por ruido acústico o reflexiones, se toman 3 muestras consecutivas (separadas por 40 ms) y se obtiene la mediana ordenando el arreglo:
 ```cpp
-int cantidadLEDs = map(distanciaInferior, 20, 0, 1, 8);
-cantidadLEDs = constrain(cantidadLEDs, 1, 8);
+float medirDistanciaFiltrada(int pinTrig, int pinEcho) {
+  float muestras[CANTIDAD_MUESTRAS];
+  for (int i = 0; i < CANTIDAD_MUESTRAS; i++) {
+    muestras[i] = medirDistancia(pinTrig, pinEcho);
+    if (i < CANTIDAD_MUESTRAS - 1) delayMicroseconds(40000);
+  }
+  // Ordenamiento para seleccionar la mediana
+  ...
+  return muestras[CANTIDAD_MUESTRAS / 2];
+}
 ```
 
-### Mapeo distancia → escalón (sensor superior)
-La distancia se convierte en el escalón donde se encuentra la persona:
+### Ramp Up por Acercamiento (`encenderRango`)
+Mientras la persona se acerca (distancia de 20 cm a 0 cm en sensor inferior), se encienden progresivamente los LEDs desde la base:
 ```cpp
-int escalonActual = map(distanciaSuperior, 5, 50, 7, 0);  // 5cm=arriba, 50cm=abajo
-escalonActual = constrain(escalonActual, 0, 7);
+int cantidadLEDs = map(distanciaInferior, DIST_INFERIOR_MAX, 0, 1, CANTIDAD_LEDS);
+cantidadLEDs = constrain(cantidadLEDs, 1, CANTIDAD_LEDS);
+encenderRango(cantidadLEDs);
 ```
 
-### Foco de 3 LEDs
-Se encienden el escalón actual más sus vecinos (radio = 1); el resto quedan apagados, por lo que las luces **siguen** a la persona en ambas direcciones:
+### Mapeo Distancia → Escalón (Sensor Superior)
+La distancia medida por el sensor superior se convierte en el índice del escalón donde se encuentra la persona:
+```cpp
+int escalonActual = map(distanciaSuperior, DIST_SUPERIOR_MIN, DIST_SUPERIOR_MAX, CANTIDAD_LEDS - 1, 0);  // 5cm=arriba (7), 50cm=abajo (0)
+escalonActual = constrain(escalonActual, 0, CANTIDAD_LEDS - 1);
+```
+
+### Foco Móvil de 3 LEDs (`encenderFoco`)
+Se encienden el escalón actual y sus vecinos adyacentes (`radio = 1`); el resto de escalones se mantienen apagados, logrando que el foco lumínico acompañe dinámicamente el desplazamiento:
 ```cpp
 void encenderFoco(int centro, int radio) {
   for (int i = 0; i < CANTIDAD_LEDS; i++) {
@@ -81,13 +96,26 @@ void encenderFoco(int centro, int radio) {
 }
 ```
 
-### Timeout sin contacto
-Si el sensor superior no detecta objeto durante 2 s, el sistema apaga todo y vuelve a `ESPERANDO`.
+### Timeout sin Contacto
+Si el sensor superior no detecta presencia durante más de 2000 ms (`TIEMPO_SIN_CONTACTO_MAX`), se invoca `apagarTodos()` y el sistema retorna al estado `ESPERANDO`.
 
 ---
 
 ## 5. Parámetros del Sistema
 
-- **Alcance inferior (`DIST_INFERIOR_MAX`):** 20 cm.
-- **Alcance superior (`DIST_SUPERIOR_MIN`/`MAX`):** 5 a 50 cm.
-- **Timeout sin contacto (`TIEMPO_SIN_CONTACTO_MAX`):** 2000 ms.
+| Parámetro | Constante | Valor | Descripción |
+|-----------|-----------|:-----:|-------------|
+| Cantidad de LEDs | `CANTIDAD_LEDS` | 8 | Un LED por escalón (D2 a D9) |
+| Alcance inferior | `DIST_INFERIOR_MAX` | 20.0 cm | Distancia de activación para acercamiento |
+| Alcance superior mín. | `DIST_SUPERIOR_MIN` | 5.0 cm | Distancia correspondiente al escalón superior (8) |
+| Alcance superior máx. | `DIST_SUPERIOR_MAX` | 50.0 cm | Distancia correspondiente al escalón inferior (1) |
+| Timeout sin contacto | `TIEMPO_SIN_CONTACTO_MAX` | 2000 ms | Tiempo de espera antes de apagar luces |
+| Muestras de filtro | `CANTIDAD_MUESTRAS` | 3 | Lecturas para cálculo de mediana |
+
+---
+
+## 6. Probar en Simulador
+
+Puedes validar y observar el comportamiento de la máquina de estados en el simulador interactivo:
+
+🔗 **[Abrir Simulación en Tinkercad](https://www.tinkercad.com/things/0pheYHJu6yR-lus-escaleras-arduino/editel?returnTo=https%3A%2F%2Fwww.tinkercad.com%2Fdashboard&sharecode=S3InYTMaIszsQmBVlUAJu1_tCbUvaevH3J8RIkOQQLU)**

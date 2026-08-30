@@ -16,7 +16,7 @@ rectangle "ENTRADA" as entrada #E0F2FE {
 
 rectangle "PROCESO" as proceso #DCFCE7 {
   rectangle "Arduino Uno\n(ATmega328P)" as a1 #86EFAC
-  rectangle "medirDistancia()\n(Trig/Echo → cm)" as a2 #86EFAC
+  rectangle "medirDistanciaFiltrada()\n(Trig/Echo → cm, filtro mediana)" as a2 #86EFAC
   rectangle "Ramp Up por Acercamiento\n(Inferior 0-20cm)" as a3 #86EFAC
   rectangle "Mapeo Distancia → Escalón\n(Superior 5-50cm)" as a4 #86EFAC
   rectangle "Foco de 3 LEDs\n(Seguimiento de persona)" as a5 #86EFAC
@@ -34,9 +34,9 @@ rectangle "SALIDA" as salida #FEE2E2 {
   rectangle "LED Escalón 8 (Pin D9 + 220 Ω)" as o8 #FCA5A5
 }
 
-s1 --> a1 : Neutro Trig D10 / Echo D11
-s2 --> a1 : Neutro Trig D12 / Echo D13
-s3 --> a1 : Voltaje 5V
+s1 --> a1 : Trig D10 / Echo D11
+s2 --> a1 : Trig D12 / Echo D13
+s3 --> a1 : Alimentación 5V
 
 a1 --> a2
 a2 --> a3

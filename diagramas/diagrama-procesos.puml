@@ -15,7 +15,7 @@ start
 :Recepción del eco\n(Echo -> duración del pulso);
 
 |Arduino Uno|
-:Conversión de tiempo a distancia\n(duración * 0.034 / 2);
+:Filtrado por mediana y conversión a cm\n(medirDistanciaFiltrada);
 :Evaluación del estado actual del sistema;
 if (¿Hay objeto en alcance?) then (sí)
   if (¿Superior ve objeto?) then (sí)

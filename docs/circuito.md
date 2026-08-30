@@ -1,6 +1,16 @@
 # Circuito Eléctrico y Conexiones
 
-Este documento detalla la distribución de componentes, el esquema de conexión y el diagrama EPS del proyecto **Escalera Inteligente**.
+Este documento detalla la distribución de componentes, el esquema de conexión, el montaje en simulador y el diagrama EPS del proyecto **Escalera Inteligente**.
+
+---
+
+## 🌐 Simulación y Esquema en Tinkercad
+
+El circuito completo implementado con Arduino Uno, 8 LEDs, resistencias de $220\,\Omega$ y 2 sensores ultrasónicos HC-SR04 está disponible para interactuar y probar en Tinkercad:
+
+🔗 **[Abrir Circuito en Simulador Tinkercad](https://www.tinkercad.com/things/0pheYHJu6yR-lus-escaleras-arduino/editel?returnTo=https%3A%2F%2Fwww.tinkercad.com%2Fdashboard&sharecode=S3InYTMaIszsQmBVlUAJu1_tCbUvaevH3J8RIkOQQLU)**
+
+![Circuito en Tinkercad](imagenes/circuito-tinkercad.png)
 
 ---
 

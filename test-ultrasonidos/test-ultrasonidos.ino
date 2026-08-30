@@ -3,15 +3,15 @@
  * Muestra las distancias del sensor inferior y superior por Serial
  *
  * Conexiones:
- *   Sensor inferior: Trig=D10, Echo=D11
- *   Sensor superior: Trig=D12, Echo=D13
+ *   Sensor superior (parte alta): Trig=D10, Echo=D11
+ *   Sensor inferior (parte baja): Trig=D12, Echo=D13
  *   VCC a 5V, GND a GND
  */
 
-const int TRIG_INFERIOR = 10;
-const int ECHO_INFERIOR = 11;
-const int TRIG_SUPERIOR = 12;
-const int ECHO_SUPERIOR = 13;
+const int TRIG_SUPERIOR = 10;
+const int ECHO_SUPERIOR = 11;
+const int TRIG_INFERIOR = 12;
+const int ECHO_INFERIOR = 13;
 
 float medirDistancia(int pinTrig, int pinEcho) {
   digitalWrite(pinTrig, LOW);
@@ -28,16 +28,16 @@ float medirDistancia(int pinTrig, int pinEcho) {
 void setup() {
   Serial.begin(9600);
 
-  pinMode(TRIG_INFERIOR, OUTPUT);
-  pinMode(ECHO_INFERIOR, INPUT);
   pinMode(TRIG_SUPERIOR, OUTPUT);
   pinMode(ECHO_SUPERIOR, INPUT);
+  pinMode(TRIG_INFERIOR, OUTPUT);
+  pinMode(ECHO_INFERIOR, INPUT);
 
-  digitalWrite(TRIG_INFERIOR, LOW);
   digitalWrite(TRIG_SUPERIOR, LOW);
+  digitalWrite(TRIG_INFERIOR, LOW);
 
   Serial.println("=== Test Sensores Ultrasonicos ===");
-  Serial.println("Inf (D10/11) | Sup (D12/13)");
+  Serial.println("Sup (D10/11) | Inf (D12/13)");
   Serial.println("Las distancias se muestran en cm");
   Serial.println();
 }

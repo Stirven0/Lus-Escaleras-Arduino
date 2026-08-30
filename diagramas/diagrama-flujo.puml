@@ -18,8 +18,8 @@ start
 :Inicializar sensores ultrasonido:\nSuperior Trig/echo D10/D11\nInferior Trig/echo D12/D13;
 
 repeat
-  :Medir distancia sensor superior\n(Función medirDistancia);
-  :Medir distancia sensor inferior\n(Función medirDistancia);
+  :Medir distancia sensor inferior\n(medirDistanciaFiltrada);
+  :Medir distancia sensor superior\n(medirDistanciaFiltrada);
 
   switch (Estado Actual)
   case ( ESPERANDO )

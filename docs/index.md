@@ -11,6 +11,16 @@ superior sigue a la persona con un foco de 3 LEDs mientras sube o baja.
 
 ---
 
+## 🌐 Simulación Interactiva en Tinkercad
+
+El circuito y la lógica de control están disponibles para su ejecución y prueba interactiva en Tinkercad:
+
+🔗 **[Abrir Simulación en Tinkercad](https://www.tinkercad.com/things/0pheYHJu6yR-lus-escaleras-arduino/editel?returnTo=https%3A%2F%2Fwww.tinkercad.com%2Fdashboard&sharecode=S3InYTMaIszsQmBVlUAJu1_tCbUvaevH3J8RIkOQQLU)**
+
+![Circuito en Tinkercad](imagenes/circuito-tinkercad.png)
+
+---
+
 ## Componentes del Hardware
 
 | Cantidad | Componente | Función | Conexión Arduino |
